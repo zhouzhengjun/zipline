@@ -871,7 +871,7 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             'close': np.arange(382, 392) / 2.0,
             'volume': np.arange(382, 392) * 100 * 2.0,
             'price': np.arange(382, 392) / 2.0,
-         }
+        }
 
         with handle_non_market_minutes(bar_data):
             # Single field, single asset
