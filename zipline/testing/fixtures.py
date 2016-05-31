@@ -618,7 +618,15 @@ class WithBcolzDailyBarReader(WithTradingEnvironment, WithTmpDir):
         # Resample that data so that daily and minute bar data are aligned.
         if cls.BCOLZ_DAILY_BAR_SOURCE_FROM_MINUTE:
             minute_data = cls.make_minute_bar_data()
-            return ((asset, data.resample('1d').dropna())
+            ohclv_how = {
+                'open': 'first',
+                'high': 'max',
+                'low': 'min',
+                'close': 'last',
+                # TODO: make volume configurable so not to go over uint.
+                'volume': 'last'
+            }
+            return ((asset, data.resample('1d', how=ohclv_how).dropna())
                     for asset, data in minute_data)
         else:
             return create_daily_bar_data(
