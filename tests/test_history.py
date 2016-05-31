@@ -445,6 +445,9 @@ MINUTE_FIELD_INFO = {
 
 
 class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
+
+    BCOLZ_DAILY_BAR_SOURCE_FROM_MINUTE = True
+
     @classmethod
     def make_minute_bar_data(cls):
         data = {}
