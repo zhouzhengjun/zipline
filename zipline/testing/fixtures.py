@@ -607,15 +607,16 @@ class WithBcolzDailyBarReader(WithTradingEnvironment, WithTmpDir):
     BCOLZ_DAILY_BAR_START_DATE = alias('START_DATE')
     BCOLZ_DAILY_BAR_END_DATE = alias('END_DATE')
     BCOLZ_DAILY_BAR_READ_ALL_THRESHOLD = None
+    BCOLZ_DAILY_BAR_SOURCE_FROM_MINUTE = False
     # allows WithBcolzDailyBarReaderFromCSVs to call the `write_csvs` method
     # without needing to reimplement `init_class_fixtures`
     _write_method_name = 'write'
 
     @classmethod
     def make_daily_bar_data(cls):
-        # If a minute bar reader has also been mixed in, resample that data
-        # so that daily and minute bar data are aligned.
-        if hasattr(cls, 'make_minute_bar_data'):
+        # Requires a minute bar reader to come before in the MRO.
+        # Resample that data so that daily and minute bar data are aligned.
+        if cls.BCOLZ_DAILY_BAR_SOURCE_FROM_MINUTE:
             minute_data = cls.make_minute_bar_data()
             return ((asset, data.resample('1d').dropna())
                     for asset, data in minute_data)
