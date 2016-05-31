@@ -776,6 +776,81 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             # should not be adjusted, should be 1005 to 1009
             np.testing.assert_array_equal(range(1005, 1010), window4)
 
+    def test_daily_splits_and_mergers(self):
+        # self.SPLIT_ASSET and self.MERGER_ASSET had splits/mergers
+        # on 1/6 and 1/7
+
+        jan5 = pd.Timestamp('2015-01-05', tz='UTC')
+
+        # the assets' close column starts at 2 on the first minute of
+        # 1/5, then goes up one per minute forever
+
+        for asset in [self.SPLIT_ASSET, self.MERGER_ASSET]:
+            # before any of the adjustments, last 10 minutes of jan 5
+            window1 = self.data_portal.get_history_window(
+                [asset],
+                self.env.get_open_and_close(jan5)[1],
+                2,
+                '1d',
+                'close'
+            )[asset]
+
+            np.testing.assert_array_equal(np.array([np.nan, 4389]), window1)
+
+            # straddling the first event
+            window2 = self.data_portal.get_history_window(
+                [asset],
+                pd.Timestamp('2015-01-06 14:35', tz='UTC'),
+                2,
+                '1d',
+                'close'
+            )[asset]
+
+            # five minutes from 1/5 should be halved
+            np.testing.assert_array_equal(
+                [2194.5,
+                 # Split occurs. The value of the thousands place should
+                 # match.
+                 2004],
+                window2
+            )
+
+            # straddling both events!
+            window3 = self.data_portal.get_history_window(
+                [asset],
+                pd.Timestamp('2015-01-07 14:35', tz='UTC'),
+                3,    # 5 minutes of 1/7, 390 of 1/6, and 5 minutes of 1/5
+                '1d',
+                'close'
+            )[asset]
+
+            # first five minutes should be 4385-4390, but quartered
+            np.testing.assert_array_equal(
+                [1096.25, 1096.5, 1096.75, 1097, 1097.25],
+                window3[0:5]
+            )
+
+            # next 390 minutes should be 2000-2390, but halved
+            np.testing.assert_array_equal(
+                np.array(range(2000, 2390), dtype='float64') / 2,
+                window3[5:395]
+            )
+
+            # final 5 minutes should be 1000-1004
+            np.testing.assert_array_equal(range(1000, 1005), window3[395:])
+
+            # after last event
+            window4 = self.data_portal.get_history_window(
+                [asset],
+                pd.Timestamp('2015-01-07 14:40', tz='UTC'),
+                5,
+                '1m',
+                'close'
+            )[asset]
+
+            # should not be adjusted, should be 1005 to 1009
+            np.testing.assert_array_equal(range(1005, 1010), window4)
+
     def test_minute_dividends(self):
         # self.DIVIDEND_ASSET had dividends on 1/6 and 1/7
 
