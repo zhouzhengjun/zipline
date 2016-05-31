@@ -855,6 +855,15 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
         current_dt = pd.Timestamp('2015-01-06 8:45', tz='US/Eastern')
         bar_data = BarData(self.data_portal, lambda: current_dt, 'minute')
 
+        adj_expected = {
+            'open': np.arange(4381, 4391) / 2.0,
+            'high': np.arange(4382, 4392) / 2.0,
+            'low': np.arange(4379, 4389) / 2.0,
+            'close': np.arange(4380, 4390) / 2.0,
+            'volume': np.arange(4380, 4390) * 100 * 2.0,
+            'price': np.arange(4380, 4390) / 2.0,
+        }
+
         expected = {
             'open': np.arange(383, 393) / 2.0,
             'high': np.arange(384, 394) / 2.0,
@@ -862,29 +871,31 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             'close': np.arange(382, 392) / 2.0,
             'volume': np.arange(382, 392) * 100 * 2.0,
             'price': np.arange(382, 392) / 2.0,
-        }
+         }
 
         with handle_non_market_minutes(bar_data):
             # Single field, single asset
             for field in ALL_FIELDS:
                 values = bar_data.history(self.SPLIT_ASSET, field, 10, '1m')
-                np.testing.assert_array_equal(values.values, expected[field])
+                np.testing.assert_array_equal(values.values,
+                                              adj_expected[field],
+                                              err_msg=field)
 
             # Multi field, single asset
             values = bar_data.history(
                 self.SPLIT_ASSET, ['open', 'volume'], 10, '1m'
             )
             np.testing.assert_array_equal(values.open.values,
-                                          expected['open'])
+                                          adj_expected['open'])
             np.testing.assert_array_equal(values.volume.values,
-                                          expected['volume'])
+                                          adj_expected['volume'])
 
             # Single field, multi asset
             values = bar_data.history(
                 [self.SPLIT_ASSET, self.ASSET2], 'open', 10, '1m'
             )
             np.testing.assert_array_equal(values[self.SPLIT_ASSET].values,
-                                          expected['open'])
+                                          adj_expected['open'])
             np.testing.assert_array_equal(values[self.ASSET2].values,
                                           expected['open'] * 2)
 
@@ -894,11 +905,11 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             )
             np.testing.assert_array_equal(
                 values.open[self.SPLIT_ASSET].values,
-                expected['open']
+                adj_expected['open']
             )
             np.testing.assert_array_equal(
                 values.volume[self.SPLIT_ASSET].values,
-                expected['volume']
+                adj_expected['volume']
             )
             np.testing.assert_array_equal(
                 values.open[self.ASSET2].values,
