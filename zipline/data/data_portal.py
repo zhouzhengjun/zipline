@@ -1059,11 +1059,21 @@ class DataPortal(object):
             data = np.concatenate(eq_data, np.array(future_data).T)
         else:
             data = eq_data
-        return pd.DataFrame(
+        df = pd.DataFrame(
             data,
             index=days_for_window,
             columns=assets
         )
+        if eq_assets:
+            splits = self.get_splits(eq_assets, normalize_date(end_dt))
+            if splits:
+                for sid, ratio in splits:
+                    df[sid][:-1] *= ratio
+            mergers = self.get_mergers(eq_assets, normalize_date(end_dt))
+            if mergers:
+                for sid, ratio in mergers:
+                    df[sid][:-1] *= ratio
+        return df
 
     def _get_history_daily_window_future(self, asset, days_for_window,
                                          end_dt, column):
@@ -1504,6 +1514,38 @@ class DataPortal(object):
         splits = [split for split in splits if split[0] in sids]
 
         return splits
+
+    def get_mergers(self, sids, dt):
+        """
+        Returns any splits for the given sids and the given dt.
+
+        Parameters
+        ----------
+        sids : container
+            Sids for which we want splits.
+        dt : pd.Timestamp
+            The date for which we are checking for splits. Note: this is
+            expected to be midnight UTC.
+
+        Returns
+        -------
+        splits : list[(int, float)]
+            List of splits, where each split is a (sid, ratio) tuple.
+        """
+        if self._adjustment_reader is None or not sids:
+            return {}
+
+        # convert dt to # of seconds since epoch, because that's what we use
+        # in the adjustments db
+        seconds = int(dt.value / 1e9)
+
+        mergers = self._adjustment_reader.conn.execute(
+            "SELECT sid, ratio FROM MERGERS WHERE effective_date = ?",
+            (seconds,)).fetchall()
+
+        mergers = [merger for merger in mergers if merger[0] in sids]
+
+        return mergers
 
     def get_stock_dividends(self, sid, trading_days):
         """

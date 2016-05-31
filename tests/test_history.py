@@ -824,20 +824,10 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 'close'
             )[asset]
 
-            # first five minutes should be 4385-4390, but quartered
             np.testing.assert_array_equal(
-                [1096.25, 1096.5, 1096.75, 1097, 1097.25],
-                window3[0:5]
+                [1097.25, 1194.50, 1004.0],
+                window3[0:3]
             )
-
-            # next 390 minutes should be 2000-2390, but halved
-            np.testing.assert_array_equal(
-                np.array(range(2000, 2390), dtype='float64') / 2,
-                window3[5:395]
-            )
-
-            # final 5 minutes should be 1000-1004
-            np.testing.assert_array_equal(range(1000, 1005), window3[395:])
 
             # after last event
             window4 = self.data_portal.get_history_window(
