@@ -613,10 +613,17 @@ class WithBcolzDailyBarReader(WithTradingEnvironment, WithTmpDir):
 
     @classmethod
     def make_daily_bar_data(cls):
-        return create_daily_bar_data(
-            cls.bcolz_daily_bar_days,
-            cls.asset_finder.sids,
-        )
+        # If a minute bar reader has also been mixed in, resample that data
+        # so that daily and minute bar data are aligned.
+        if hasattr(cls, 'make_minute_bar_data'):
+            minute_data = cls.make_minute_bar_data()
+            return ((asset, data.resample('1d').dropna())
+                    for asset, data in minute_data)
+        else:
+            return create_daily_bar_data(
+                cls.bcolz_daily_bar_days,
+                cls.asset_finder.sids,
+            )
 
     @classmethod
     def init_class_fixtures(cls):
@@ -1069,7 +1076,9 @@ class WithSeededRandomPipelineEngine(WithNYSETradingDays, WithAssetFinder):
         )
 
 
-class WithDataPortal(WithBcolzMinuteBarReader, WithAdjustmentReader):
+class WithDataPortal(WithAdjustmentReader,
+                     # Ordered so that bcolz minute reader is used first.
+                     WithBcolzMinuteBarReader):
     """
     ZiplineTestCase mixin providing self.data_portal as an instance level
     fixture.
