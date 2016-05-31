@@ -451,7 +451,7 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
     @classmethod
     def make_minute_bar_data(cls):
         data = {}
-        sids = {2, 4, 5, 6, cls.SHORT_ASSET_SID, cls.HALF_DAY_TEST_ASSET_SID}
+        sids = {2, 5, cls.SHORT_ASSET_SID, cls.HALF_DAY_TEST_ASSET_SID}
         for sid in sids:
             asset = cls.asset_finder.retrieve_asset(sid)
             data[sid] = create_minute_df_for_asset(
@@ -468,6 +468,23 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             start_val=2,
         )
 
+        data[cls.MERGER_ASSET_SID] = data[cls.SPLIT_ASSET_SID] = pd.concat((
+            create_minute_df_for_asset(
+                cls.env,
+                pd.Timestamp('2015-01-05', tz='UTC'),
+                pd.Timestamp('2015-01-05', tz='UTC'),
+                start_val=4000),
+            create_minute_df_for_asset(
+                cls.env,
+                pd.Timestamp('2015-01-06', tz='UTC'),
+                pd.Timestamp('2015-01-06', tz='UTC'),
+                start_val=2000),
+            create_minute_df_for_asset(
+                cls.env,
+                pd.Timestamp('2015-01-07', tz='UTC'),
+                pd.Timestamp('2015-01-07', tz='UTC'),
+                start_val=1000)
+        ))
         asset3 = cls.asset_finder.retrieve_asset(3)
         data[3] = create_minute_df_for_asset(
             cls.env,
@@ -694,7 +711,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 'close'
             )[asset]
 
-            np.testing.assert_array_equal(np.array(range(382, 392)), window1)
+            np.testing.assert_array_equal(
+                np.array(range(4380, 4390)), window1)
 
             # straddling the first event
             window2 = self.data_portal.get_history_window(
@@ -707,7 +725,18 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
 
             # five minutes from 1/5 should be halved
             np.testing.assert_array_equal(
-                [193.5, 194, 194.5, 195, 195.5, 392, 393, 394, 395, 396],
+                [2192.5,
+                 2193,
+                 2193.5,
+                 2194,
+                 2194.5,
+                 # Split occurs. The value of the thousands place should
+                 # match.
+                 2000,
+                 2001,
+                 2002,
+                 2003,
+                 2004],
                 window2
             )
 
@@ -720,20 +749,20 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 'close'
             )[asset]
 
-            # first five minutes should be 387-391, but quartered
+            # first five minutes should be 4385-4390, but quartered
             np.testing.assert_array_equal(
-                [96.75, 97, 97.25, 97.5, 97.75],
+                [1096.25, 1096.5, 1096.75, 1097, 1097.25],
                 window3[0:5]
             )
 
-            # next 390 minutes should be 392-781, but halved
+            # next 390 minutes should be 2000-2390, but halved
             np.testing.assert_array_equal(
-                np.array(range(392, 782), dtype='float64') / 2,
+                np.array(range(2000, 2390), dtype='float64') / 2,
                 window3[5:395]
             )
 
-            # final 5 minutes should be 782-787
-            np.testing.assert_array_equal(range(782, 787), window3[395:])
+            # final 5 minutes should be 1000-1004
+            np.testing.assert_array_equal(range(1000, 1005), window3[395:])
 
             # after last event
             window4 = self.data_portal.get_history_window(
@@ -744,8 +773,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 'close'
             )[asset]
 
-            # should not be adjusted, should be 787 to 791
-            np.testing.assert_array_equal(range(787, 792), window4)
+            # should not be adjusted, should be 1005 to 1009
+            np.testing.assert_array_equal(range(1005, 1010), window4)
 
     def test_minute_dividends(self):
         # self.DIVIDEND_ASSET had dividends on 1/6 and 1/7
