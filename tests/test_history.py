@@ -451,7 +451,7 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
     @classmethod
     def make_minute_bar_data(cls):
         data = {}
-        sids = {2, 5, cls.SHORT_ASSET_SID, cls.HALF_DAY_TEST_ASSET_SID}
+        sids = {1, 5, cls.SHORT_ASSET_SID, cls.HALF_DAY_TEST_ASSET_SID}
         for sid in sids:
             asset = cls.asset_finder.retrieve_asset(sid)
             data[sid] = create_minute_df_for_asset(
@@ -461,11 +461,16 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 start_val=2,
             )
 
-        data[1] = create_minute_df_for_asset(
+        asset2 = cls.asset_finder.retrieve_asset(2)
+        data[asset2.sid] = create_minute_df_for_asset(
             cls.env,
-            pd.Timestamp('2014-01-03', tz='utc'),
-            pd.Timestamp('2016-01-30', tz='utc'),
+            asset2.start_date,
+            cls.env.previous_trading_day(asset2.end_date),
             start_val=2,
+            minute_blacklist=[
+                pd.Timestamp('2015-01-08 14:31', tz='UTC'),
+                pd.Timestamp('2015-01-08 21:00', tz='UTC'),
+            ],
         )
 
         data[cls.MERGER_ASSET_SID] = data[cls.SPLIT_ASSET_SID] = pd.concat((
