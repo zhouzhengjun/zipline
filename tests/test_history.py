@@ -1004,6 +1004,68 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                     [self.ASSET1], first_day_minutes[5], 15, '1m', 'price'
                 )[self.ASSET1]
 
+    def test_daily_history_blended(self):
+        # daily history windows that end mid-day use minute values for the
+        # last day
+
+        # January 2015 has both daily and minute data for ASSET2
+        day = pd.Timestamp('2015-01-07', tz='UTC')
+        minutes = self.env.market_minutes_for_day(day)
+
+        # minute data, baseline:
+        # Jan 5: 2 to 391
+        # Jan 6: 392 to 781
+        # Jan 7: 782 to 1172
+        for idx, minute in enumerate(minutes):
+            for field in ALL_FIELDS:
+                window = self.data_portal.get_history_window(
+                    [self.ASSET2],
+                    minute,
+                    3,
+                    '1d',
+                    field
+                )[self.ASSET2]
+
+                self.assertEqual(len(window), 3)
+
+                if field == 'open':
+                    self.assertEqual(window[0], 3)
+                    self.assertEqual(window[1], 393)
+                elif field == 'high':
+                    self.assertEqual(window[0], 393)
+                    self.assertEqual(window[1], 783)
+                elif field == 'low':
+                    self.assertEqual(window[0], 1)
+                    self.assertEqual(window[1], 391)
+                elif field == 'close':
+                    self.assertEqual(window[0], 391)
+                    self.assertEqual(window[1], 781)
+                elif field == 'volume':
+                    self.assertEqual(window[0], 39100)
+                    self.assertEqual(window[1], 78100)
+
+                last_val = -1
+
+                if field == 'open':
+                    last_val = 783
+                elif field == 'high':
+                    # since we increase monotonically, it's just the last
+                    # value
+                    last_val = 784 + idx
+                elif field == 'low':
+                    # since we increase monotonically, the low is the first
+                    # value of the day
+                    last_val = 781
+                elif field == 'close' or field == 'price':
+                    last_val = 782 + idx
+                elif field == 'volume':
+                    # for volume, we sum up all the minutely volumes so far
+                    # today
+
+                    last_val = sum(np.array(range(782, 782 + idx + 1)) * 100)
+
+                self.assertEqual(window[-1], last_val)
+
 
 class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
     @classmethod
@@ -1353,61 +1415,6 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
         )
 
         self.assertNotEqual(0, volume_window[self.ASSET2][-3])
-
-    def test_daily_history_blended(self):
-        # daily history windows that end mid-day use minute values for the
-        # last day
-
-        # January 2015 has both daily and minute data for ASSET2
-        day = pd.Timestamp('2015-01-07', tz='UTC')
-        minutes = self.env.market_minutes_for_day(day)
-
-        # minute data, baseline:
-        # Jan 5: 2 to 391
-        # Jan 6: 392 to 781
-        # Jan 7: 782 to 1172
-        for idx, minute in enumerate(minutes):
-            for field in ALL_FIELDS:
-                adj = MINUTE_FIELD_INFO[field]
-
-                window = self.data_portal.get_history_window(
-                    [self.ASSET2],
-                    minute,
-                    3,
-                    '1d',
-                    field
-                )[self.ASSET2]
-
-                self.assertEqual(len(window), 3)
-
-                if field == 'volume':
-                    self.assertEqual(window[0], 200)
-                    self.assertEqual(window[1], 300)
-                else:
-                    self.assertEqual(window[0], 2 + adj)
-                    self.assertEqual(window[1], 3 + adj)
-
-                last_val = -1
-
-                if field == 'open':
-                    last_val = 783
-                elif field == 'high':
-                    # since we increase monotonically, it's just the last
-                    # value
-                    last_val = 784 + idx
-                elif field == 'low':
-                    # since we increase monotonically, the low is the first
-                    # value of the day
-                    last_val = 781
-                elif field == 'close' or field == 'price':
-                    last_val = 782 + idx
-                elif field == 'volume':
-                    # for volume, we sum up all the minutely volumes so far
-                    # today
-
-                    last_val = sum(np.array(range(782, 782 + idx + 1)) * 100)
-
-                self.assertEqual(window[-1], last_val)
 
     @parameterized.expand(ALL_FIELDS)
     def test_daily_history_blended_gaps(self, field):
