@@ -1347,7 +1347,7 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                     3,
                     '1d',
                     field,
-                    'daily',
+                    'minute',
                 )[self.ASSET2]
 
                 self.assertEqual(len(window), 3)
@@ -1403,7 +1403,7 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 3,
                 '1d',
                 field,
-                'daily',
+                'minute',
             )[self.ASSET2]
 
             self.assertEqual(len(window), 3)

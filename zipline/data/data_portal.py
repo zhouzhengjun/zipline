@@ -1125,13 +1125,7 @@ class DataPortal(object):
     def _get_history_daily_window_equities(
             self, assets, days_for_window, end_dt, field_to_use,
             data_frequency):
-        ends_at_midnight = end_dt.hour == 0 and end_dt.minute == 0
-
-        if ends_at_midnight:
-            # two cases where we use daily data for the whole range:
-            # 1) the history window ends at midnight utc.
-            # 2) the last desired day of the window is after the
-            # last trading day, use daily data for the whole range.
+        if data_frequency == 'daily':
             return self._get_daily_window_for_sids(
                 assets,
                 field_to_use,
