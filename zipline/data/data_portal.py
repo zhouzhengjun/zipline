@@ -1059,21 +1059,11 @@ class DataPortal(object):
             data = np.concatenate(eq_data, np.array(future_data).T)
         else:
             data = eq_data
-        df = pd.DataFrame(
+        return pd.DataFrame(
             data,
             index=days_for_window,
             columns=assets
         )
-        if eq_assets:
-            splits = self.get_splits(eq_assets, normalize_date(end_dt))
-            if splits:
-                for sid, ratio in splits:
-                    df[sid][:-1] *= ratio
-            mergers = self.get_mergers(eq_assets, normalize_date(end_dt))
-            if mergers:
-                for sid, ratio in mergers:
-                    df[sid][:-1] *= ratio
-        return df
 
     def _get_history_daily_window_future(self, asset, days_for_window,
                                          end_dt, column):
