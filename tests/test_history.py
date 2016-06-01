@@ -39,7 +39,7 @@ ALL_FIELDS = OHLCP + ['volume']
 
 class WithHistory(WithDataPortal):
     TRADING_START_DT = TRADING_ENV_MIN_DATE = START_DATE = pd.Timestamp(
-        '2014-02-03',
+        '2014-01-03',
         tz='UTC',
     )
     TRADING_END_DT = END_DATE = pd.Timestamp('2016-01-29', tz='UTC')
@@ -1054,8 +1054,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             self.TRADING_START_DT
         )
         exp_msg = (
-            'History window extends before 2014-02-03. To use this history '
-            'window, start the backtest on or after 2014-02-04.'
+            'History window extends before 2014-01-03. To use this history '
+            'window, start the backtest on or after 2014-01-06.'
         )
         for field in OHLCP:
             with self.assertRaisesRegexp(

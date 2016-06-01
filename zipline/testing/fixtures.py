@@ -613,21 +613,52 @@ class WithBcolzDailyBarReader(WithTradingEnvironment, WithTmpDir):
     _write_method_name = 'write'
 
     @classmethod
+    def _make_daily_bar_from_minute(cls):
+        assets = cls.asset_finder.retrieve_all(cls.asset_finder.sids)
+        ohclv_how = {
+            'open': 'first',
+            'high': 'max',
+            'low': 'min',
+            'close': 'last',
+            # TODO: make volume configurable so not to go over uint.
+            'volume': 'last'
+        }
+        mm = cls.env.market_minutes
+        m_opens = cls.env.open_and_closes.market_open
+        m_closes = cls.env.open_and_closes.market_close
+
+        for asset in assets:
+            first_minute = m_opens.loc[asset.start_date]
+            last_minute = m_closes.loc[asset.end_date]
+            window = cls.bcolz_minute_bar_reader.load_raw_arrays(
+                fields=['open', 'high', 'low', 'close', 'volume'],
+                start_dt=first_minute,
+                end_dt=last_minute,
+                sids=[asset.sid],
+            )
+            opens, highs, lows, closes, volumes = [c.reshape(-1)
+                                                   for c in window]
+            minutes = mm[mm.slice_indexer(start=first_minute,
+                                          end=last_minute)]
+            df = pd.DataFrame(
+                {
+                    'open': opens,
+                    'high': highs,
+                    'low': lows,
+                    'close': closes,
+                    'volume': volumes,
+                },
+                index=minutes
+            )
+
+            yield asset.sid, df.resample('1d', how=ohclv_how).dropna()
+
+    @classmethod
     def make_daily_bar_data(cls):
         # Requires a minute bar reader to come before in the MRO.
         # Resample that data so that daily and minute bar data are aligned.
         if cls.BCOLZ_DAILY_BAR_SOURCE_FROM_MINUTE:
-            minute_data = cls.make_minute_bar_data()
-            ohclv_how = {
-                'open': 'first',
-                'high': 'max',
-                'low': 'min',
-                'close': 'last',
-                # TODO: make volume configurable so not to go over uint.
-                'volume': 'last'
-            }
-            return ((asset, data.resample('1d', how=ohclv_how).dropna())
-                    for asset, data in minute_data)
+            return cls._make_daily_bar_from_minute()
         else:
             return create_daily_bar_data(
                 cls.bcolz_daily_bar_days,
