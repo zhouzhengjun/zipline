@@ -1562,8 +1562,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
         second_day = self.env.next_trading_day(self.TRADING_START_DT)
 
         exp_msg = (
-            'History window extends before 2014-02-03. To use this history '
-            'window, start the backtest on or after 2014-02-07.'
+            'History window extends before 2014-01-03. To use this history '
+            'window, start the backtest on or after 2014-01-09.'
         )
 
         with self.assertRaisesRegexp(HistoryWindowStartsBeforeData, exp_msg):
