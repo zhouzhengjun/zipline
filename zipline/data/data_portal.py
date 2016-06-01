@@ -1029,7 +1029,7 @@ class DataPortal(object):
         return tds[start_loc:end_loc + 1]
 
     def _get_history_daily_window(self, assets, end_dt, bar_count,
-                                  field_to_use):
+                                  field_to_use, data_frequency):
         """
         Internal method that returns a dataframe containing history bars
         of daily frequency for the given sids.
@@ -1052,7 +1052,7 @@ class DataPortal(object):
             else:
                 eq_assets.append(asset)
         eq_data = self._get_history_daily_window_equities(
-            eq_assets, days_for_window, end_dt, field_to_use
+            eq_assets, days_for_window, end_dt, field_to_use, data_frequency,
         )
         if future_data:
             # TODO: This case appears to be uncovered by testing.
@@ -1123,7 +1123,8 @@ class DataPortal(object):
         return data
 
     def _get_history_daily_window_equities(
-            self, assets, days_for_window, end_dt, field_to_use):
+            self, assets, days_for_window, end_dt, field_to_use,
+            data_frequency):
         ends_at_midnight = end_dt.hour == 0 and end_dt.minute == 0
 
         if ends_at_midnight:
@@ -1198,6 +1199,7 @@ class DataPortal(object):
         )
 
     def get_history_window(self, assets, end_dt, bar_count, frequency, field,
+                           data_frequency,
                            ffill=True):
         """
         Public API method that returns a dataframe containing the requested
@@ -1231,10 +1233,10 @@ class DataPortal(object):
         if frequency == "1d":
             if field == "price":
                 df = self._get_history_daily_window(assets, end_dt, bar_count,
-                                                    "close")
+                                                    "close", data_frequency)
             else:
                 df = self._get_history_daily_window(assets, end_dt, bar_count,
-                                                    field)
+                                                    field, data_frequency)
         elif frequency == "1m":
             if field == "price":
                 df = self._get_history_minute_window(assets, end_dt, bar_count,
@@ -1248,9 +1250,9 @@ class DataPortal(object):
         # forward-fill price
         if field == "price":
             if frequency == "1m":
-                data_frequency = 'minute'
+                ffill_frequency = 'minute'
             elif frequency == "1d":
-                data_frequency = 'daily'
+                ffill_frequency = 'daily'
             else:
                 raise Exception(
                     "Only 1d and 1m are supported for forward-filling.")
@@ -1262,7 +1264,7 @@ class DataPortal(object):
             for missing_loc in assets_with_leading_nan:
                 asset = assets[missing_loc]
                 previous_dt = self.get_last_traded_dt(
-                    asset, dt_to_fill, data_frequency)
+                    asset, dt_to_fill, ffill_frequency)
                 if pd.isnull(previous_dt):
                     continue
                 previous_value = self.get_adjusted_value(
@@ -1270,7 +1272,7 @@ class DataPortal(object):
                     field,
                     previous_dt,
                     perspective_dt,
-                    data_frequency,
+                    ffill_frequency,
                 )
                 df.iloc[0, missing_loc] = previous_value
 

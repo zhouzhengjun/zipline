@@ -688,7 +688,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 self.env.get_open_and_close(jan5)[1],
                 10,
                 '1m',
-                'close'
+                'close',
+                'minute'
             )[asset]
 
             np.testing.assert_array_equal(np.array(range(382, 392)), window1)
@@ -699,7 +700,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-06 14:35', tz='UTC'),
                 10,
                 '1m',
-                'close'
+                'close',
+                'minute'
             )[asset]
 
             # five minutes from 1/5 should be halved
@@ -714,7 +716,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-07 14:35', tz='UTC'),
                 400,    # 5 minutes of 1/7, 390 of 1/6, and 5 minutes of 1/5
                 '1m',
-                'close'
+                'close',
+                'minute'
             )[asset]
 
             # first five minutes should be 387-391, but quartered
@@ -738,7 +741,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-07 14:40', tz='UTC'),
                 5,
                 '1m',
-                'close'
+                'close',
+                'minute'
             )[asset]
 
             # should not be adjusted, should be 787 to 791
@@ -753,7 +757,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             pd.Timestamp('2015-01-05 21:00', tz='UTC'),
             10,
             '1m',
-            'close'
+            'close',
+            'minute'
         )[self.DIVIDEND_ASSET]
 
         np.testing.assert_array_equal(np.array(range(382, 392)), window1)
@@ -764,7 +769,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             pd.Timestamp('2015-01-06 14:35', tz='UTC'),
             10,
             '1m',
-            'close'
+            'close',
+            'minute'
         )[self.DIVIDEND_ASSET]
 
         # first dividend is 2%, so the first five values should be 2% lower
@@ -783,7 +789,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             pd.Timestamp('2015-01-07 14:35', tz='UTC'),
             400,    # 5 minutes of 1/7, 390 of 1/6, and 5 minutes of 1/5
             '1m',
-            'close'
+            'close',
+            'minute'
         )[self.DIVIDEND_ASSET]
 
         # first five minute from 1/7 should be hit by 0.9408 (= 0.98 * 0.96)
@@ -890,7 +897,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             dt,
             20,
             '1m',
-            'close'
+            'close',
+            'minute'
         )[self.HALF_DAY_TEST_ASSET]
 
         # 390 minutes for 7/2, 210 minutes for 7/3, 7/4-7/6 closed
@@ -927,7 +935,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             self.env.get_open_and_close(day)[0],
             100,
             '1m',
-            'close'
+            'close',
+            'daily'
         )
 
         np.testing.assert_array_equal(
@@ -953,7 +962,8 @@ class MinuteEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             with self.assertRaisesRegexp(
                     HistoryWindowStartsBeforeData, exp_msg):
                 self.data_portal.get_history_window(
-                    [self.ASSET1], first_day_minutes[5], 15, '1m', 'price'
+                    [self.ASSET1], first_day_minutes[5], 15, '1m', 'price',
+                    'daily'
                 )[self.ASSET1]
 
 
@@ -1167,7 +1177,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-05', tz='UTC'),
                 1,
                 '1d',
-                'close'
+                'close',
+                'daily',
             )[asset]
 
             np.testing.assert_array_equal(window1, [2])
@@ -1177,7 +1188,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-05', tz='UTC'),
                 1,
                 '1d',
-                'volume'
+                'volume',
+                'daily',
             )[asset]
 
             np.testing.assert_array_equal(window1_volume, [200])
@@ -1188,7 +1200,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-06', tz='UTC'),
                 2,
                 '1d',
-                'close'
+                'close',
+                'daily',
             )[asset]
 
             # first value should be halved, second value unadjusted
@@ -1199,7 +1212,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-06', tz='UTC'),
                 2,
                 '1d',
-                'volume'
+                'volume',
+                'daily',
             )[asset]
 
             if asset == self.SPLIT_ASSET:
@@ -1214,7 +1228,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-07', tz='UTC'),
                 3,
                 '1d',
-                'close'
+                'close',
+                'daily',
             )[asset]
 
             np.testing.assert_array_equal([0.5, 1.5, 4], window3)
@@ -1224,7 +1239,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 pd.Timestamp('2015-01-07', tz='UTC'),
                 3,
                 '1d',
-                'volume'
+                'volume',
+                'daily',
             )[asset]
 
             if asset == self.SPLIT_ASSET:
@@ -1241,7 +1257,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             pd.Timestamp('2015-01-05', tz='UTC'),
             1,
             '1d',
-            'close'
+            'close',
+            'daily',
         )[self.DIVIDEND_ASSET]
 
         np.testing.assert_array_equal(window1, [2])
@@ -1252,7 +1269,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             pd.Timestamp('2015-01-06', tz='UTC'),
             2,
             '1d',
-            'close'
+            'close',
+            'daily',
         )[self.DIVIDEND_ASSET]
 
         # first dividend is 2%, so the first value should be 2% lower than
@@ -1265,7 +1283,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             pd.Timestamp('2015-01-07', tz='UTC'),
             3,
             '1d',
-            'close'
+            'close',
+            'daily',
         )[self.DIVIDEND_ASSET]
 
         # second dividend is 0.96
@@ -1327,7 +1346,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                     minute,
                     3,
                     '1d',
-                    field
+                    field,
+                    'daily',
                 )[self.ASSET2]
 
                 self.assertEqual(len(window), 3)
@@ -1382,7 +1402,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 minute,
                 3,
                 '1d',
-                field
+                field,
+                'daily',
             )[self.ASSET2]
 
             self.assertEqual(len(window), 3)
@@ -1464,7 +1485,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 second_day,
                 4,
                 '1d',
-                'price'
+                'price',
+                'daily',
             )[self.ASSET1]
 
         with self.assertRaisesRegexp(HistoryWindowStartsBeforeData, exp_msg):
@@ -1473,7 +1495,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 second_day,
                 4,
                 '1d',
-                'volume'
+                'volume',
+                'daily',
             )[self.ASSET1]
 
         # Use a minute to force minute mode.
@@ -1486,7 +1509,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
                 first_minute,
                 4,
                 '1d',
-                'close'
+                'close',
+                'daily',
             )[self.ASSET2]
 
     def test_history_window_different_order(self):
@@ -1503,7 +1527,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             day,
             4,
             "1d",
-            "close"
+            "close",
+            "daily",
         )
 
         window_2 = self.data_portal.get_history_window(
@@ -1511,7 +1536,8 @@ class DailyEquityHistoryTestCase(WithHistory, ZiplineTestCase):
             day,
             4,
             "1d",
-            "close"
+            "close",
+            "daily",
         )
 
         np.testing.assert_almost_equal(window_1[self.ASSET1].values,
