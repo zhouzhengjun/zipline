@@ -77,9 +77,10 @@ def days_at_time(days, t, tz, day_offset=0):
     """
     days = DatetimeIndex(days).tz_localize(None).tz_localize(tz)
     days_offset = days + DateOffset(day_offset)
-    return days_offset.shift(
+    shifted_days = DatetimeIndex(days_offset.shift(
         1, freq=DateOffset(hour=t.hour, minute=t.minute, second=t.second)
-    ).tz_convert('UTC')
+    ))
+    return shifted_days.tz_localize(None).tz_localize(tz).tz_convert('UTC')
 
 
 def holidays_at_time(calendar, start, end, time, tz):
@@ -487,7 +488,7 @@ class ExchangeCalendar(with_metaclass(ABCMeta)):
 _static_calendars = {}
 
 
-def get_calendar(name):
+def get_calendar(name, start=None, end=None):
     """
     Retrieves an instance of an ExchangeCalendar whose name is given.
 
@@ -499,35 +500,41 @@ def get_calendar(name):
     # First, check if the calendar is already registered
     if name not in _static_calendars:
 
+        kwargs = {}
+        if start is not None:
+            kwargs['start'] = start
+        if end is not None:
+            kwargs['end'] = end
+
         # Check if it is a lazy calendar. If so, build and register it.
         if name == 'NYSE':
             from zipline.utils.calendars.exchange_calendar_nyse \
                 import NYSEExchangeCalendar
-            nyse_cal = NYSEExchangeCalendar()
+            nyse_cal = NYSEExchangeCalendar(**kwargs)
             register_calendar(nyse_cal)
 
         elif name == 'CME':
             from zipline.utils.calendars.exchange_calendar_cme \
                 import CMEExchangeCalendar
-            cme_cal = CMEExchangeCalendar()
+            cme_cal = CMEExchangeCalendar(**kwargs)
             register_calendar(cme_cal)
 
         elif name == 'BMF':
             from zipline.utils.calendars.exchange_calendar_bmf \
                 import BMFExchangeCalendar
-            bmf_cal = BMFExchangeCalendar()
+            bmf_cal = BMFExchangeCalendar(**kwargs)
             register_calendar(bmf_cal)
 
         elif name == 'LSE':
             from zipline.utils.calendars.exchange_calendar_lse \
                 import LSEExchangeCalendar
-            lse_cal = LSEExchangeCalendar()
+            lse_cal = LSEExchangeCalendar(**kwargs)
             register_calendar(lse_cal)
 
         elif name == 'TSX':
             from zipline.utils.calendars.exchange_calendar_tsx \
                 import TSXExchangeCalendar
-            tsx_cal = TSXExchangeCalendar()
+            tsx_cal = TSXExchangeCalendar(**kwargs)
             register_calendar(tsx_cal)
 
         else:
