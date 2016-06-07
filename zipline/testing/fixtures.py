@@ -368,7 +368,7 @@ class WithAssetFinder(WithDefaultDateBounds):
         cls.asset_finder = cls.make_asset_finder()
 
 
-class WithTradingSchedule(object):
+class WithTradingSchedule(WithDefaultDateBounds):
     """
     ZiplineTestCase mixing providing cls.trading_schedule as a class-level
     fixture.
@@ -390,7 +390,13 @@ class WithTradingSchedule(object):
     --------
     :class:`zipline.utils.calendars.trading_schedule.TradingSchedule`
     """
-    TRADING_SCHEDULE_CALENDAR = get_calendar('NYSE')
+    TRADING_SCHEDULE_START_DATE = alias('START_DATE')
+    TRADING_SCHEDULE_END_DATE = alias('END_DATE')
+    TRADING_SCHEDULE_CALENDAR = get_calendar(
+        'NYSE',
+        start=TRADING_SCHEDULE_START_DATE,
+        end=TRADING_SCHEDULE_END_DATE,
+    )
 
     @classmethod
     def make_trading_schedule(cls):
