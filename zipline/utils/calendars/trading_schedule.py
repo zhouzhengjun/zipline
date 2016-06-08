@@ -35,6 +35,7 @@ from .calendar_helpers import (
     next_scheduled_minute,
     previous_scheduled_minute
 )
+from zipline.utils.memoize import remember_last
 
 
 class TradingSchedule(with_metaclass(ABCMeta)):
@@ -413,4 +414,6 @@ class ExchangeTradingSchedule(TradingSchedule):
         return self._exchange_calendar.early_closes
 
 
-default_nyse_schedule = ExchangeTradingSchedule(cal=get_calendar('NYSE'))
+@remember_last
+def default_nyse_schedule():
+    return ExchangeTradingSchedule(cal=get_calendar('NYSE'))

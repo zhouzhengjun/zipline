@@ -40,7 +40,7 @@ def create_test_zipline(**config):
     concurrent_trades = config.get('concurrent_trades', False)
     order_count = config.get('order_count', 100)
     order_amount = config.get('order_amount', 100)
-    trading_schedule = config.get('trading_schedule', default_nyse_schedule)
+    trading_schedule = config.get('trading_schedule', default_nyse_schedule())
 
     # -------------------
     # Create the Algo

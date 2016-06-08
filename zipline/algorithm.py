@@ -284,7 +284,7 @@ class TradingAlgorithm(object):
         # If a schedule has been provided, pop it. Otherwise, use NYSE.
         self.trading_schedule = kwargs.pop(
             'trading_schedule',
-            default_nyse_schedule,
+            default_nyse_schedule(),
         )
 
         # set the capital base

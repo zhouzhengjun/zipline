@@ -78,7 +78,7 @@ class TradingEnvironment(object):
         load=None,
         bm_symbol='^GSPC',
         exchange_tz="US/Eastern",
-        trading_schedule=default_nyse_schedule,
+        trading_schedule=default_nyse_schedule(),
         asset_db_path=':memory:'
     ):
 

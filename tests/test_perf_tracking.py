@@ -178,7 +178,7 @@ def calculate_results(sim_params,
     commissions = commissions or {}
 
     perf_tracker = perf.PerformanceTracker(sim_params,
-                                           default_nyse_schedule,
+                                           default_nyse_schedule(),
                                            env)
 
     results = []
@@ -244,7 +244,7 @@ def setup_env_data(env, sim_params, sids, futures_sids=[]):
     for sid in sids:
         data[sid] = {
             "start_date": sim_params.trading_days[0],
-            "end_date": default_nyse_schedule.next_execution_day(
+            "end_date": default_nyse_schedule().next_execution_day(
                 sim_params.trading_days[-1]
             )
         }
@@ -255,7 +255,7 @@ def setup_env_data(env, sim_params, sids, futures_sids=[]):
     for future_sid in futures_sids:
         futures_data[future_sid] = {
             "start_date": sim_params.trading_days[0],
-            "end_date": default_nyse_schedule.next_execution_day(
+            "end_date": default_nyse_schedule().next_execution_day(
                 sim_params.trading_days[-1]
             ),
             "multiplier": 100

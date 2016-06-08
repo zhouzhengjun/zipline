@@ -70,7 +70,7 @@ TEST_RESOURCE_PATH = join(
 )
 
 
-trading_day = default_nyse_schedule.day
+trading_day = default_nyse_schedule().day
 
 
 def rolling_vwap(df, length):

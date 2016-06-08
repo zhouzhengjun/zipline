@@ -36,7 +36,7 @@ class RandomWalkSource(DataSource):
 
     def __init__(self, start_prices=None, freq='minute', start=None,
                  end=None, drift=0.1, sd=0.1,
-                 trading_schedule=default_nyse_schedule):
+                 trading_schedule=default_nyse_schedule()):
         """
         :Arguments:
             start_prices : dict

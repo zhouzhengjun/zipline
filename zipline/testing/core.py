@@ -684,7 +684,7 @@ def create_data_portal_from_trade_history(asset_finder, trading_schedule,
 
 class FakeDataPortal(DataPortal):
 
-    def __init__(self, env=None,  trading_schedule=default_nyse_schedule,
+    def __init__(self, env=None,  trading_schedule=default_nyse_schedule(),
                  first_trading_day=None):
         if env is None:
             env = TradingEnvironment()
@@ -1026,7 +1026,7 @@ def gen_calendars(start, stop, critical_dates):
         yield (all_dates.drop(to_drop),)
 
     # Also test with the trading calendar.
-    trading_days = default_nyse_schedule.all_execution_days
+    trading_days = default_nyse_schedule().all_execution_days
     yield (trading_days[trading_days.slice_indexer(start, stop)],)
 
 
