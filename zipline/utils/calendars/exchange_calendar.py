@@ -49,7 +49,7 @@ from .calendar_helpers import (
     previous_scheduled_minute,
 )
 
-start_default = pd.Timestamp('1990-01-01', tz='UTC')
+start_default = pd.Timestamp('2002-01-01', tz='UTC')
 end_base = pd.Timestamp('today', tz='UTC')
 # Give an aggressive buffer for logic that needs to use the next trading
 # day or minute.
@@ -77,9 +77,11 @@ def days_at_time(days, t, tz, day_offset=0):
     """
     days = DatetimeIndex(days).tz_localize(None).tz_localize(tz)
     days_offset = days + DateOffset(day_offset)
-    return days_offset.shift(
+    shifted_days = DatetimeIndex(days_offset.shift(
         1, freq=DateOffset(hour=t.hour, minute=t.minute, second=t.second)
-    ).tz_convert('UTC')
+    ))
+
+    return shifted_days.tz_localize(None).tz_localize(tz).tz_convert('UTC')
 
 
 def holidays_at_time(calendar, start, end, time, tz):
