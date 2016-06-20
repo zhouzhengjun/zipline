@@ -16,121 +16,53 @@
 from datetime import time
 from itertools import chain
 
-from dateutil.relativedelta import (
-    MO,
-    TH,
-)
 from pandas import (
-    date_range,
-    DateOffset,
     Timedelta,
     Timestamp,
 )
 from pandas.tseries.holiday import(
     AbstractHolidayCalendar,
-    GoodFriday,
     Holiday,
-    nearest_workday,
-    sunday_to_monday,
-    USLaborDay,
-    USPresidentsDay,
-    USThanksgivingDay,
 )
-from pandas.tseries.offsets import Day
 from pytz import timezone
 
-from zipline.utils.calendars import ExchangeCalendar
 from .calendar_helpers import normalize_date
 
 # Useful resources for making changes to this file:
-# http://www.nyse.com/pdfs/closings.pdf
-# http://www.stevemorse.org/jcal/whendid.html
+# http://www.cmegroup.com/tools-information/holiday-calendar.html
 
-MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
+from .exchange_calendar import (
+    ExchangeCalendar,
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    USNewYearsDay,
+    Christmas,
+    FridayAfterIndependenceDayExcept2013,
+    MonTuesThursBeforeIndependenceDay,
+    USBlackFridayInOrAfter1993,
+    September11Closings, HurricaneSandyClosings, USNationalDaysofMourning)
 
 US_CENTRAL = timezone('America/Chicago')
 CME_OPEN = time(17)
 CME_CLOSE = time(16)
-# CME_STANDARD_EARLY_CLOSE = time(13)
+
+# The CME seems to have different holiday rules depending on the type
+# of instrument.  For example, http://www.cmegroup.com/tools-information/holiday-calendar/files/2016-4th-of-july-holiday-schedule.pdf # noqa
+# shows that Equity, Interest Rate, FX, Energy, Metals & DME Products close at
+# 1200 CT on July 4, 2016, while Grain, Oilseed & MGEX Products and Livestock,
+# Dairy & Lumber products are completely closed.
+
+# For now, we will treat the CME as having a single calendar, and just go with
+# the most conservative hours - and treat July 4 as an early close at noon.
+CME_STANDARD_EARLY_CLOSE = time(12)
+
 # Does the market open or close on a different calendar day, compared to the
-# calendar day assigned by the exchang to this session?
+# calendar day assigned by the exchange to this session?
 CME_OPEN_OFFSET = -1
-CME_CLOSE_OFFSET = 0
+CME_CLOSE_OFFSET = -0
 
-# Closings
-USNewYearsDay = Holiday(
-    'New Years Day',
-    month=1,
-    day=1,
-    # When Jan 1 is a Sunday, NYSE observes the subsequent Monday.  When Jan 1
-    # Saturday (as in 2005 and 2011), no holiday is observed.
-    observance=sunday_to_monday
-)
-USMemorialDay = Holiday(
-    # NOTE: The definition for Memorial Day is incorrect as of pandas 0.16.0.
-    # See https://github.com/pydata/pandas/issues/9760.
-    'Memorial Day',
-    month=5,
-    day=25,
-    offset=DateOffset(weekday=MO(1)),
-)
-USMartinLutherKingJrAfter1998 = Holiday(
-    'Dr. Martin Luther King Jr. Day',
-    month=1,
-    day=1,
-    # The NYSE didn't observe MLK day as a holiday until 1998.
-    start_date=Timestamp('1998-01-01'),
-    offset=DateOffset(weekday=MO(3)),
-)
-USIndependenceDay = Holiday(
-    'July 4th',
-    month=7,
-    day=4,
-    observance=nearest_workday,
-)
-Christmas = Holiday(
-    'Christmas',
-    month=12,
-    day=25,
-    observance=nearest_workday,
-)
-
-# Half Days
-MonTuesThursBeforeIndependenceDay = Holiday(
-    # When July 4th is a Tuesday, Wednesday, or Friday, the previous day is a
-    # half day.
-    'Mondays, Tuesdays, and Thursdays Before Independence Day',
-    month=7,
-    day=3,
-    days_of_week=(MONDAY, TUESDAY, THURSDAY),
-    start_date=Timestamp("1995-01-01"),
-)
-FridayAfterIndependenceDayExcept2013 = Holiday(
-    # When July 4th is a Thursday, the next day is a half day (except in 2013,
-    # when, for no explicable reason, Wednesday was a half day instead).
-    "Fridays after Independence Day that aren't in 2013",
-    month=7,
-    day=5,
-    days_of_week=(FRIDAY,),
-    observance=lambda dt: None if dt.year == 2013 else dt,
-    start_date=Timestamp("1995-01-01"),
-)
-USBlackFridayBefore1993 = Holiday(
-    'Black Friday',
-    month=11,
-    day=1,
-    # Black Friday was not observed until 1992.
-    start_date=Timestamp('1992-01-01'),
-    end_date=Timestamp('1993-01-01'),
-    offset=[DateOffset(weekday=TH(4)), Day(1)],
-)
-USBlackFridayInOrAfter1993 = Holiday(
-    'Black Friday',
-    month=11,
-    day=1,
-    start_date=Timestamp('1993-01-01'),
-    offset=[DateOffset(weekday=TH(4)), Day(1)],
-)
 # These have the same definition, but are used in different places because the
 # NYSE closed at 2:00 PM on Christmas Eve until 1993.
 ChristmasEveBefore1993 = Holiday(
@@ -151,27 +83,6 @@ ChristmasEveInOrAfter1993 = Holiday(
 )
 
 
-# http://en.wikipedia.org/wiki/Aftermath_of_the_September_11_attacks
-September11Closings = date_range('2001-09-11', '2001-09-16', tz='UTC')
-
-# http://en.wikipedia.org/wiki/Hurricane_sandy
-HurricaneSandyClosings = date_range(
-    '2012-10-29',
-    '2012-10-30',
-    tz='UTC'
-)
-
-# National Days of Mourning
-# - President Richard Nixon - April 27, 1994
-# - President Ronald W. Reagan - June 11, 2004
-# - President Gerald R. Ford - Jan 2, 2007
-USNationalDaysofMourning = [
-    Timestamp('1994-04-27', tz='UTC'),
-    Timestamp('2004-06-11', tz='UTC'),
-    Timestamp('2007-01-02', tz='UTC'),
-]
-
-
 class CMEHolidayCalendar(AbstractHolidayCalendar):
     """
     Non-trading days for the CME.
@@ -180,14 +91,6 @@ class CMEHolidayCalendar(AbstractHolidayCalendar):
     """
     rules = [
         USNewYearsDay,
-        USMartinLutherKingJrAfter1998,
-        USPresidentsDay,
-        GoodFriday,
-        USMemorialDay,
-        USIndependenceDay,
-        USLaborDay,
-        USThanksgivingDay,
-        USIndependenceDay,
         Christmas,
     ]
 
@@ -196,6 +99,14 @@ class CMEEarlyCloseCalendar(AbstractHolidayCalendar):
     """
     Regular early close calendar for NYSE
     """
+    # mlk day
+    # presidents day
+    # good friday
+    # mem day
+    # independence day
+    # labor day
+    # thanksgiving day
+
     rules = [
         MonTuesThursBeforeIndependenceDay,
         FridayAfterIndependenceDayExcept2013,
@@ -208,7 +119,7 @@ class CMEExchangeCalendar(ExchangeCalendar):
     """
     Exchange calendar for CME
 
-    Open Time: 5:00 AM, America/Chicago
+    Open Time: 5:00 PM, America/Chicago
     Close Time: 5:00 PM, America/Chicago
 
     Regularly-Observed Holidays:
@@ -222,18 +133,15 @@ class CMEExchangeCalendar(ExchangeCalendar):
     - Thanksgiving (fourth Thursday in November)
     - Christmas (observed on nearest weekday to December 25)
 
-    NOTE: The CME does not observe the following US Federal Holidays:
+    NOTE: For the following US Federal Holidays, part of the CME is closed
+    (Foreign Exchange, Interest Rates) but Commodities, GSCI, Weather & Real
+    Estate is open.  Thus, we don't treat these as holidays.
     - Columbus Day
     - Veterans Day
 
     Regularly-Observed Early Closes:
-    - July 3rd (Mondays, Tuesdays, and Thursdays, 1995 onward)
-    - July 5th (Fridays, 1995 onward, except 2013)
     - Christmas Eve (except on Fridays, when the exchange is closed entirely)
     - Day After Thanksgiving (aka Black Friday, observed from 1992 onward)
-
-    NOTE: Until 1993, the standard early close time for the NYSE was 2:00 PM.
-    From 1993 onward, it has been 1:00 PM.
 
     Additional Irregularities:
     - Closed from 9/11/2001 to 9/16/2001 due to terrorist attacks in NYC.
@@ -273,19 +181,10 @@ class CMEExchangeCalendar(ExchangeCalendar):
 
     @property
     def name(self):
-        """
-        The name of this exchange calendar.
-        E.g.: 'NYSE', 'LSE', 'CME Energy'
-        """
         return 'CME'
 
     @property
     def tz(self):
-        """
-        The native timezone of the exchange.
-
-        SD: Not clear that this needs to be exposed.
-        """
         return self.native_timezone
 
     def is_open_on_minute(self, dt):

@@ -9,10 +9,12 @@ from pandas.tseries.holiday import(
 )
 from pytz import timezone
 
-from zipline.utils.calendars.exchange_calendar import ExchangeCalendar
 from zipline.utils.calendars.calendar_helpers import normalize_date
 
-MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
+from .exchange_calendar import (
+    ExchangeCalendar,
+    FRIDAY
+)
 
 # Universal Confraternization (new years day)
 ConfUniversal = Holiday(

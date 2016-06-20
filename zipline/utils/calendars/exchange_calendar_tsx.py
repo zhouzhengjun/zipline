@@ -19,8 +19,6 @@ from zipline.utils.calendars.exchange_calendar_lse import (
     WeekendBoxingDay,
 )
 
-MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
-
 # New Year's Day
 TSXNewYearsDay = Holiday(
     "New Year's Day",

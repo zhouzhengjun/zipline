@@ -76,7 +76,8 @@ def next_scheduled_day(date, last_trading_day, is_scheduled_day_hook):
     return None
 
 
-def previous_scheduled_day(date, first_trading_day, is_scheduled_day_hook):
+def previous_scheduled_day(date, first_trading_day, is_scheduled_day_hook,
+                           session_date_hook):
     """
     Returns the previous session date in the calendar before the provided date.
 
@@ -90,7 +91,7 @@ def previous_scheduled_day(date, first_trading_day, is_scheduled_day_hook):
     Timestamp
         The previous scheduled date before the provided date.
     """
-    dt = normalize_date(date)
+    session_date = session_date_hook(date)
     delta = pd.Timedelta(days=-1)
 
     while first_trading_day < dt:
